@@ -4,6 +4,8 @@
 
 Implements a Least Recently Used cache.
 
+Primary implementation is in `lib/cache/cache_agent.ex`
+
 External routes are
 
 * PUT to `/put`  
