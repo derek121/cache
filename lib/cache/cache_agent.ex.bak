@@ -1,0 +1,126 @@
+defmodule Cache.CacheAgent do
+  use Agent
+
+  def start_link(initial_value) do
+    IO.inspect(initial_value, label: "start_link()")
+
+    Agent.start_link(fn -> initial_value end, name: __MODULE__)
+  end
+
+  def get_state() do
+    Agent.get(__MODULE__, fn state -> state end)
+  end
+
+  @doc """
+  Get the value associated with key, updating internal state to
+  mark this key's relative access time as being touched.
+
+  The Agent's state is a Map of key => {val, ts}, where ts is a unique identifier.
+
+  Calls `Agent.get_and_update/2` to get the current value for key, and update
+    the Agent's state Map's value for key to a fresh ts.
+
+  That Map update is done via `Map.get_and_update/2`, which returns the current
+  {val, current_ts}, and a new {val, new_ts} to be associated with key.
+
+  TODO: :gb_tree stuff
+  """
+  def get(key) do
+    IO.inspect(key, label: "get()")
+
+    #Agent.get_and_update(__MODULE__, fn state ->
+    Agent.get_and_update(__MODULE__, &(agent_get_and_update(&1, key)))
+#      IO.inspect(state, label: "get. state")
+#
+#      {{val, ts_cur}, state_new} =
+#        Map.get_and_update(state, key, fn
+#          nil ->
+#            {nil, nil}
+#
+#          {val, _ts_cur} = tup ->
+#            ts_new = generate_id()
+#            {tup, {val, ts_new}}
+#        end)
+#
+#      IO.puts("Got val #{inspect(val)}. ts_cur: #{inspect(ts_cur)}. state_new: #{inspect(state_new)}")
+#
+#      # TODO: :gb_tree stuff with ts_cur
+#
+#      {val, state_new}
+#    end)
+
+  end
+
+  @doc """
+  Return: {value, new_state}
+  """
+  defp agent_get_and_update(state, key) do
+    IO.inspect(state, label: "get. state")
+
+    {{val, ts_cur}, state_new} =
+      case map_get_and_update(state, key) do
+        {nil, state_new} = ret ->
+          IO.puts("Got nil. state_new: #{inspect(state_new)}")
+          ret
+
+        {val, _ts_cur} = tup ->
+          IO.puts("1 Got #{inspect(tup)}")
+          ts_new = generate_id()
+          {tup, {val, ts_new}}
+
+          IO.puts("Got val #{inspect(val)}. ts_cur: #{inspect(ts_cur)}. state_new: #{inspect(state_new)}")
+
+          # TODO: :gb_tree stuff with ts_cur
+
+          {val, state_new}
+      end
+
+#      Map.get_and_update(state, key, fn
+#        nil ->
+#          IO.puts("1 Got nil")
+#          {nil, nil}
+#
+#        {val, _ts_cur} = tup ->
+#          IO.puts("1 Got #{inspect(tup)}")
+#          ts_new = generate_id()
+#          {tup, {val, ts_new}}
+#      end)
+
+  end
+
+  defp map_get_and_update(state, key) do
+    Map.get_and_update(state, key, fn
+      nil ->
+        IO.puts("1 Got nil")
+        :pop
+
+      {val, _ts_cur} = tup ->
+        IO.puts("1 Got #{inspect(tup)}")
+        ts_new = generate_id()
+        {tup, {val, ts_new}}
+    end)
+  end
+
+  @doc """
+  Add key => val, setting a unique identifier in internal state to
+  mark this insertion's relative access time as being touched.
+
+  In the Agent's state Map, add `key => {val, ts}`
+  where ts is a unique identifier.
+  """
+  def put(key, val) do
+    IO.inspect(val, label: "put()")
+
+    ts = generate_id()
+
+    Agent.update(__MODULE__, fn state ->
+      Map.put(state, key, {val, ts})
+      |> IO.inspect(label: "Map now")
+    end)
+  end
+
+  defp generate_id() do
+    System.unique_integer([:positive, :monotonic])
+  end
+
+end
