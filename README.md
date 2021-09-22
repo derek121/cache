@@ -4,6 +4,11 @@
 
 Implements a Least Recently Used cache.
 
+State is stored in an Agent, which ensures serialized access. This
+doesn't allow for concurrent access, which was a decision made
+to simplify implementation, since both structures need to be
+updated together.
+
 Primary implementation is in `lib/cache/cache_agent.ex`
 
 External routes are
