@@ -13,13 +13,13 @@ Primary implementation is in `lib/cache/cache_agent.ex`
 
 External routes are
 
-* PUT to `/put`  
+* POST to `/put`  
   Payload `{"key": key, "value": value}`
 
 * POST to `/get`  
 Payload `{"key": key}`
 
-Any PUT or GET resets that key's "freshness identifier", so it's considered
+Any put or get resets that key's "freshness identifier", so it's considered
 the "most recently used" key.
 
 The max cache size is hardcoded to 3 for dev/testing purposes. It would be
